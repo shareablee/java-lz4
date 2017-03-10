@@ -33,18 +33,28 @@
 (deftest lz4
   []
 
-  (time
-   (with-open [in (FileInputStream. "/home/nathants/data/input")
-               out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 4096 1024) 1)]
-     (io/copy in out)))
+  (testing "can encode"
+    (time
+     (with-open [in (FileInputStream. "/home/nathants/data/input")
+                 out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 4096 1024) 1)]
+       (io/copy in out))))
 
-  (time
-   (let [buf-size 1024]
-     (with-open [in (LZ4CompatibleInputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)
-                 out (FileOutputStream. "/home/nathants/data/output")]
-       (io/copy in out :buffer-size buf-size))))
+  (testing "can decode"
+    (time
+     (let [buf-size 1024]
+       (with-open [in (LZ4CompatibleInputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)
+                   out (FileOutputStream. "/home/nathants/data/output")]
+         (io/copy in out :buffer-size buf-size)))))
 
-  (let [expected (run "cat /home/nathants/data/input| xxhsum|cut -d' ' -f1")]
-    (is (= expected (sum "/home/nathants/data/output")))
-    (is (= expected (sum "/home/nathants/data/input")))
-    (is (= expected (run "cat /home/nathants/data/output| xxhsum| cut -d' ' -f1")))))
+  (testing "worked properly"
+    (let [expected (run "cat /home/nathants/data/input| xxhsum|cut -d' ' -f1")]
+      (is (= expected (sum "/home/nathants/data/output")))
+      (is (= expected (sum "/home/nathants/data/input")))
+      (is (= expected (run "cat /home/nathants/data/output| xxhsum| cut -d' ' -f1")))))
+
+  (testing "checksum fails when file is corrupted"
+    (run "dd if=/dev/zero of=/home/nathants/data/output.lz4 bs=1 seek=1000 count=1 conv=notrunc")
+    (is (thrown? AssertionError (run "lz4 -d /home/nathants/data/output.lz4 /dev/null")))
+    (is (thrown? java.io.IOException (let [buf-size 1024]
+                                       (with-open [in (LZ4CompatibleInputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)]
+                                         (dorun (line-seq (io/reader in)))))))))

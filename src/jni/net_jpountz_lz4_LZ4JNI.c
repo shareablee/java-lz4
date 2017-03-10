@@ -19,6 +19,14 @@
 #include "lz4frame.h"
 #include "net_jpountz_lz4_LZ4JNI.h"
 
+static const LZ4F_preferences_t lz4_preferences = {
+	{ LZ4F_max256KB, LZ4F_blockLinked, LZ4F_contentChecksumEnabled, LZ4F_frame, 0, { 0, 0 } },
+	0,   /* compression level */
+	0,   /* autoflush */
+	{ 0, 0, 0, 0 },  /* reserved, must be set to 0 */
+};
+
+
 static jclass OutOfMemoryError;
 
 /*
@@ -227,17 +235,11 @@ JNIEXPORT jint JNICALL Java_net_jpountz_lz4_LZ4JNI_LZ4F_1compressBegin
    jobject errorResult)
 {
   void* availableDstBuffer = (void*) (*env)->GetPrimitiveArrayCritical(env, dstBuffer, 0) + dstOffset;
-
-  LZ4F_preferences_t prefs = {0};
-  prefs.compressionLevel = compressionLevel;
-
-  size_t result = LZ4F_compressBegin(longToCContext(readable_context), availableDstBuffer, dstSize, &prefs);
+  size_t result = LZ4F_compressBegin(longToCContext(readable_context), availableDstBuffer, dstSize, &lz4_preferences);
   if (LZ4F_isError(result)) {
     returnError(env, errorResult, result);
-    // TODO: we could return the error code?
     return 0;
   }
-
   return result;
 }
 
