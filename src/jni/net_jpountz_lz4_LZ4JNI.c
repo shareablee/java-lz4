@@ -127,9 +127,9 @@ JNIEXPORT void JNICALL Java_net_jpountz_lz4_LZ4JNI_LZ4F_1freeCompressionContext(
 
 JNIEXPORT jint JNICALL Java_net_jpountz_lz4_LZ4JNI_LZ4F_1compressBegin(JNIEnv *env, jclass cls, jlong readable_context, jint compressionLevel, jbyteArray dstBuffer, jint dstOffset, jint dstSize, jobject errorResult) {
   void* availableDstBuffer = (void*) (*env)->GetPrimitiveArrayCritical(env, dstBuffer, 0) + dstOffset;
-  /* LZ4F_preferences_t prefs = lz4_preferences; */
-  /* prefs->compressionLevel = compressionLevel; */
-  size_t result = LZ4F_compressBegin(longToCContext(readable_context), availableDstBuffer, dstSize, &lz4_preferences);
+  LZ4F_preferences_t prefs = lz4_preferences;
+  prefs.compressionLevel = compressionLevel;
+  size_t result = LZ4F_compressBegin(longToCContext(readable_context), availableDstBuffer, dstSize, &prefs);
   if (LZ4F_isError(result)) {
     returnError(env, errorResult, result);
     return 0;
@@ -138,7 +138,7 @@ JNIEXPORT jint JNICALL Java_net_jpountz_lz4_LZ4JNI_LZ4F_1compressBegin(JNIEnv *e
 }
 
 JNIEXPORT jint JNICALL Java_net_jpountz_lz4_LZ4JNI_LZ4F_1compressBound(JNIEnv* env, jclass cls, jint srcSize) {
-  return LZ4F_compressBound(srcSize, NULL);
+  return LZ4F_compressBound(srcSize, &lz4_preferences);
 }
 
 JNIEXPORT jint JNICALL Java_net_jpountz_lz4_LZ4JNI_LZ4F_1compressUpdate(JNIEnv *env, jclass cls, jlong readable_context, jbyteArray srcBuffer, jint srcOffset, jint srcSize, jbyteArray dstBuffer, jint dstOffset, jint dstSize, jobject errorResult) {

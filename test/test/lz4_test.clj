@@ -36,8 +36,16 @@
   (testing "can encode"
     (time
      (with-open [in (FileInputStream. "/home/nathants/data/input")
-                 out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 4096 1024) 1)]
+                 out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 4096 1024) 0)]
+       (io/copy in out)))
+    (time
+     (with-open [in (FileInputStream. "/home/nathants/data/input")
+                 out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4.small") (* 4096 1024) 3)]
        (io/copy in out))))
+
+  (testing "compression level is working"
+    (is (< (.length (java.io.File. "/home/nathants/data/output.lz4.small"))
+           (.length (java.io.File. "/home/nathants/data/output.lz4")))))
 
   (testing "can decode"
     (time
