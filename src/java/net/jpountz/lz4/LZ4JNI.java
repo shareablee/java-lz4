@@ -20,25 +20,11 @@ import java.nio.ByteBuffer;
 
 import net.jpountz.util.Native;
 
-
-/**
- * JNI bindings to the original C implementation of LZ4.
- */
 enum LZ4JNI {
   ;
 
-  /**
-   * Error returned by lz4frame. If an error occurred, `message` will be non-null.
-   */
   public static class LZ4FError {
     String message = null;
-
-    /**
-     * Check if the error was set.
-     *
-     * @throws IOException
-     *           If an error was set.
-     */
     public void check() throws IOException {
       if (message != null)
         throw new IOException(message);
@@ -51,36 +37,14 @@ enum LZ4JNI {
   }
 
   static native void init();
-
   static native long LZ4F_createCompressionContext(LZ4FError error);
   static native void LZ4F_freeCompressionContext(long context, LZ4FError error);
-  static native int LZ4F_compressBegin(long context, int compressionLevel, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
-  static native int LZ4F_compressBound(int srcSize);
-  static native int LZ4F_compressUpdate(long context, byte[] srcArray, int srcOffset, int srcLen, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
-  static native int LZ4F_compressEnd(long context, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
-  static native int LZ4F_compressFlush(long context, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
+  static native int  LZ4F_compressBegin(long context, int compressionLevel, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
+  static native int  LZ4F_compressBound(int srcSize);
+  static native int  LZ4F_compressUpdate(long context, byte[] srcArray, int srcOffset, int srcLen, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
+  static native int  LZ4F_compressEnd(long context, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
+  static native int  LZ4F_compressFlush(long context, byte[] dstArray, int dstOffset, int dstLen, LZ4FError error);
   static native long LZ4F_createDecompressionContext(LZ4FError error);
   static native void LZ4F_freeDecompressionContext(long context, LZ4FError error);
-
-  /**
-   * Try to decompress an array of bytes.
-   *
-   * @param context Decompression context
-   * @param srcArray Source buffer
-   * @param srcOff Place to start in the source buffer
-   * @param srcLen Number of bytes to read after the offset
-   * @param dstArray Destination buffer
-   * @param dstOff Place to start in the destination buffer
-   * @param dstLen Number of bytes available after the offset
-   * @param error Structure that will be filled if an error occur
-   * @return <ul>
-   * <li>A positive value indicating the number of bytes written if all the source could be read</li>
-   * <li>A negative value indicating minus the number of bytes read if the destination buffer is full</li>
-   * <li>0 if an error occurred. <code>error</code> will be filled in this case.
-   * </ul>
-   */
-  static native int LZ4F_decompress(long context,
-     byte[] srcArray, int srcOff, int srcLen,
-     byte[] dstArray, int dstOff, int dstLen,
-     LZ4FError error);
+  static native int  LZ4F_decompress(long context, byte[] srcArray, int srcOff, int srcLen, byte[] dstArray, int dstOff, int dstLen, LZ4FError error);
 }

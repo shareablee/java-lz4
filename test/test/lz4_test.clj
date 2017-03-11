@@ -46,7 +46,7 @@
                    out (FileOutputStream. "/home/nathants/data/output")]
          (io/copy in out :buffer-size buf-size)))))
 
-  (testing "worked properly"
+  (testing "xxhsum"
     (let [expected (run "cat /home/nathants/data/input| xxhsum|cut -d' ' -f1")]
       (is (= expected (sum "/home/nathants/data/output")))
       (is (= expected (sum "/home/nathants/data/input")))
