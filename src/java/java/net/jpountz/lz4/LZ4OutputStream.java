@@ -80,7 +80,13 @@ public class LZ4OutputStream extends FilterOutputStream {
     }
 
     @Override
-    public void flush() throws IOException { throw new IOException("please dont flush lz4 streams"); }
+    public void flush() throws IOException {
+        compressBuffer();
+        written = LZ4JNI.LZ4F_compressFlush(lz4fContext, outputBuffer, 0, outputBuffer.length, error);
+        error.check();
+        out.write(outputBuffer, 0, written);
+        super.flush();
+    }
 
     @Override
     public void write(int b) throws IOException { throw new IOException("please dont write single bytes to lz4 streams"); }

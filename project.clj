@@ -2,7 +2,6 @@
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
-  :jar-exclusions [#".*\.clj"]
-  :resource-paths ["src/main/resource"]
   :auto-clean false
-  :aot :all)
+  :aot :all
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}})
