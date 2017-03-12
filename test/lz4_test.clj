@@ -17,7 +17,6 @@
     (assert (-> res :exit (= 0)) (assoc res :cmd cmd))
     (.trim (:out res))))
 
-
 (defn sum
   [path]
   (let [h (.newStreamingHash64 (XXHashFactory/nativeInstance) 0)]
