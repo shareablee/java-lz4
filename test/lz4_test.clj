@@ -5,8 +5,8 @@
            java.io.FileOutputStream
            net.jpountz.xxhash.XXHashFactory
            [net.jpountz.lz4
-            LZ4CompatibleOutputStream
-            LZ4CompatibleInputStream])
+            LZ4OutputStream
+            LZ4InputStream])
   (:require [clojure.java.shell :as sh]
             [clojure.test :refer :all]
             [clojure.java.io :as io]))
@@ -35,11 +35,11 @@
   (testing "can encode"
     (time
      (with-open [in (FileInputStream. "/home/nathants/data/input")
-                 out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 4096 1024) 0)]
+                 out (LZ4OutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 4096 1024) 0)]
        (io/copy in out)))
     (time
      (with-open [in (FileInputStream. "/home/nathants/data/input")
-                 out (LZ4CompatibleOutputStream. (FileOutputStream. "/home/nathants/data/output.lz4.small") (* 4096 1024) 3)]
+                 out (LZ4OutputStream. (FileOutputStream. "/home/nathants/data/output.lz4.small") (* 4096 1024) 3)]
        (io/copy in out))))
 
   (testing "compression level is working"
@@ -49,7 +49,7 @@
   (testing "can decode"
     (time
      (let [buf-size 1024]
-       (with-open [in (LZ4CompatibleInputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)
+       (with-open [in (LZ4InputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)
                    out (FileOutputStream. "/home/nathants/data/output")]
          (io/copy in out :buffer-size buf-size)))))
 
@@ -63,5 +63,5 @@
     (run "dd if=/dev/zero of=/home/nathants/data/output.lz4 bs=1 seek=1000 count=1 conv=notrunc")
     (is (thrown? AssertionError (run "lz4 -d /home/nathants/data/output.lz4 /dev/null")))
     (is (thrown? java.io.IOException (let [buf-size 1024]
-                                       (with-open [in (LZ4CompatibleInputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)]
+                                       (with-open [in (LZ4InputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 4096 1024) buf-size)]
                                          (dorun (line-seq (io/reader in)))))))))
