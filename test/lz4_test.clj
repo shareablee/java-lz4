@@ -8,7 +8,7 @@
              [generators :as gen]
              [properties :as prop]]
             [clojure.string :as s])
-  (:import [java.io File IOException FileInputStream FileOutputStream ByteArrayInputStream ByteArrayOutputStream]
+  (:import [java.io File IOException]
            [net.jpountz.lz4 LZ4InputStream LZ4OutputStream]
            net.jpountz.xxhash.XXHashFactory))
 
@@ -40,11 +40,11 @@
   (let [tmp-file (run "tempfile")]
     (prop/for-all [lines gen-lines]
       (let [txt (str (s/join "\n" lines) "\n")
-            out (FileOutputStream. tmp-file)
+            out (io/output-stream tmp-file)
             out-stream (LZ4OutputStream. out (* 64 1024) 0)
             _ (io/copy txt out-stream)
             _ (.close out)
-            in (FileInputStream. tmp-file)
+            in (io/input-stream tmp-file)
             in-stream (LZ4InputStream. in (* 64 1024) (* 64 1024))
             lines (line-seq (io/reader in-stream))]
         (.close in)
@@ -53,7 +53,7 @@
 (defn sum
   [path]
   (let [h (.newStreamingHash64 (XXHashFactory/nativeInstance) 0)]
-    (with-open [in (FileInputStream. path)]
+    (with-open [in (io/input-stream path)]
       (let [buffer (make-array Byte/TYPE (* 64 1024))]
         (loop []
           (let [size (.read in buffer)]
@@ -68,21 +68,21 @@
   []
   (testing "can encode"
     (time
-     (with-open [in (FileInputStream. "/home/nathants/data/input")
-                 out (LZ4OutputStream. (FileOutputStream. "/home/nathants/data/output.lz4") (* 64 1024) 0)]
+     (with-open [in (io/input-stream "/home/nathants/data/input")
+                 out (LZ4OutputStream. (io/output-stream "/home/nathants/data/output.lz4") (* 64 1024) 0)]
        (io/copy in out)))
     (time
-     (with-open [in (FileInputStream. "/home/nathants/data/input")
-                 out (LZ4OutputStream. (FileOutputStream. "/home/nathants/data/output.lz4.small") (* 64 1024) 3)]
+     (with-open [in (io/input-stream "/home/nathants/data/input")
+                 out (LZ4OutputStream. (io/output-stream "/home/nathants/data/output.lz4.small") (* 64 1024) 3)]
        (io/copy in out))))
   (testing "compression level is working"
-    (is (< (.length (File. "/home/nathants/data/output.lz4.small"))
-           (.length (File. "/home/nathants/data/output.lz4")))))
+    (is (< (.length (io/file "/home/nathants/data/output.lz4.small"))
+           (.length (io/file "/home/nathants/data/output.lz4")))))
   (testing "can decode"
     (time
      (let [buf-size 1024]
-       (with-open [in (LZ4InputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 64 1024) buf-size)
-                   out (FileOutputStream. "/home/nathants/data/output")]
+       (with-open [in (LZ4InputStream. (io/input-stream "/home/nathants/data/output.lz4") (* 64 1024) buf-size)
+                   out (io/output-stream "/home/nathants/data/output")]
          (io/copy in out :buffer-size buf-size)))))
   (testing "xxhsum"
     (let [expected (run "cat /home/nathants/data/input| xxhsum|cut -d' ' -f1")]
@@ -93,5 +93,5 @@
     (run "dd if=/dev/zero of=/home/nathants/data/output.lz4 bs=1 seek=1000 count=1 conv=notrunc")
     (is (thrown? AssertionError (run "lz4 -d /home/nathants/data/output.lz4 /dev/null")))
     (is (thrown? IOException (let [buf-size 1024]
-                               (with-open [in (LZ4InputStream. (FileInputStream. "/home/nathants/data/output.lz4") (* 64 1024) buf-size)]
+                               (with-open [in (LZ4InputStream. (io/input-stream "/home/nathants/data/output.lz4") (* 64 1024) buf-size)]
                                  (dorun (line-seq (io/reader in)))))))))
